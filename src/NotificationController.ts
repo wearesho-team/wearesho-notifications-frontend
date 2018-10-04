@@ -1,0 +1,106 @@
+import axios, { AxiosResponse } from "axios";
+import openSocket from "socket.io-client";
+import { NotificationInterface } from "./NotificationInterface";
+
+export class NotificationController {
+    public readonly notifications: Array<NotificationInterface> = [];
+
+    protected notificationsServerUrl: string;
+    protected socketUrl: string;
+
+    private authorizationToken: string;
+    private socket: SocketIOClient.Socket;
+    private notificationListeners: Array<(notification: NotificationInterface) => void> = [];
+
+    public constructor(notificationsServerUrl: string, socketUrl: string) {
+        this.notificationsServerUrl = notificationsServerUrl;
+        this.socketUrl = socketUrl;
+    }
+
+    public authorize = (token: string): NotificationController => {
+        this.authorizationToken = token;
+        return this;
+    }
+
+    public init = (): Promise<NotificationController> => {
+        return this.connect().loadNotifications();
+    }
+
+    public subscribe = (callback: (notification: NotificationInterface) => void): NotificationController => {
+        this.notificationListeners.push(callback);
+        return this;
+    }
+
+    public readNotification = async (notificationId: string): Promise<void> => {
+        await axios.patch("/notification", {}, {
+            baseURL: this.notificationsServerUrl,
+            params: { id: notificationId },
+            headers: { Authorization: this.authorizationToken },
+        });
+
+        const index = this.notifications.findIndex((notification) => notification.id === notificationId);
+        if (index === -1) {
+            return;
+        }
+
+        this.notifications[index].read = true;
+    }
+
+    public deleteNotification = async (notificationId: string): Promise<void> => {
+        await axios.delete("/notification", {
+            baseURL: this.notificationsServerUrl,
+            params: { id: notificationId },
+            headers: { Authorization: this.authorizationToken },
+        });
+
+        const index = this.notifications.findIndex((notification) => notification.id === notificationId);
+        if (index === -1) {
+            return;
+        }
+
+        this.notifications.splice(index, 1);
+    }
+
+    protected connect = (): NotificationController => {
+        this.socket = openSocket(this.socketUrl);
+
+        this.socket.on("deny", () => {
+            // tslint:disable:no-console
+            console.error("Invalid authorization token");
+        });
+
+        this.socket.on("authorized", () => {
+            this.socket.on("push", this.loadNotification);
+        });
+
+        this.socket.emit("auth", this.authorizationToken);
+
+        return this;
+    }
+
+    protected loadNotifications = async (): Promise<NotificationController> => {
+        const response: AxiosResponse<{
+            notifications: Array<NotificationInterface>
+        }> = await axios.get("/notifications", {
+            baseURL: this.notificationsServerUrl,
+            headers: { Authorization: this.authorizationToken },
+        });
+
+        this.notifications.push(...response.data.notifications);
+
+        return this;
+    }
+
+    protected loadNotification = async (notificationId: string): Promise<void> => {
+        const response: AxiosResponse<{
+            notification: NotificationInterface
+        }> = await axios.get("/notification", {
+            baseURL: this.notificationsServerUrl,
+            headers: { Authorization: this.authorizationToken },
+            params: { id: notificationId },
+        });
+
+        this.notifications.push(response.data.notification);
+        this.notificationListeners.forEach((callback) => callback(response.data.notification));
+    }
+}
