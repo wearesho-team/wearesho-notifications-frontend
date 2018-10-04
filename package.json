@@ -1,0 +1,27 @@
+{
+  "name": "@wearesho/notifications-frontend",
+  "version": "1.0.0",
+  "description": "Library for connection with wearesho-notifications service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wearesho-team/wearesho-notifications-frontend.git"
+  },
+  "keywords": [
+    "Notification",
+    "Wearesho"
+  ],
+  "author": "sashabeton",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wearesho-team/wearesho-notifications-frontend/issues"
+  },
+  "homepage": "https://github.com/wearesho-team/wearesho-notifications-frontend#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "dotenv": "^6.0.0"
+  }
+}
