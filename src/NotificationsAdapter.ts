@@ -3,7 +3,7 @@ import openSocket from "socket.io-client";
 import { NotificationInterface } from "./NotificationInterface";
 import { SubscriberInterface } from "./SubscriberInterface";
 
-export class NotificationController {
+export class NotificationsAdapter {
     protected static readonly localStorageKey = "wearesho.notification.authorizationToken";
 
     protected url: string;
@@ -17,24 +17,24 @@ export class NotificationController {
         this.socket = openSocket(url);
     }
 
-    public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationController> => {
-        const stored = localStorage.getItem(NotificationController.localStorageKey);
+    public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationsAdapter> => {
+        const stored = localStorage.getItem(NotificationsAdapter.localStorageKey);
         if (stored) {
             this.authorizationToken = stored;
             return this;
         }
 
         this.authorizationToken = await requestCallable();
-        localStorage.setItem(NotificationController.localStorageKey, this.authorizationToken);
+        localStorage.setItem(NotificationsAdapter.localStorageKey, this.authorizationToken);
 
         return this;
     };
 
-    public connect = (): NotificationController => {
+    public connect = (): NotificationsAdapter => {
         this.socket.on("deny", () => {
             // tslint:disable:no-console
             console.error("Invalid authorization token");
-            localStorage.removeItem(NotificationController.localStorageKey);
+            localStorage.removeItem(NotificationsAdapter.localStorageKey);
         });
 
         this.socket.on("authorized", () => {
@@ -48,7 +48,7 @@ export class NotificationController {
         return this;
     };
 
-    public subscribe = (subscriber: SubscriberInterface): NotificationController => {
+    public subscribe = (subscriber: SubscriberInterface): NotificationsAdapter => {
         this.subsribers.push(subscriber);
         return this;
     };
@@ -86,7 +86,7 @@ export class NotificationController {
 
     public logout = () => {
         this.socket.close();
-        localStorage.removeItem(NotificationController.localStorageKey);
+        localStorage.removeItem(NotificationsAdapter.localStorageKey);
     };
 
     protected handleNewNotification = async (notificationId: string): Promise<void> => {

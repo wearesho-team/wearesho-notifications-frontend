@@ -14,13 +14,13 @@ npm i --save @wearesho/notifications-frontend
 
 ### Setting up environment
 
-Create a [Notification Controller](./src/NotificationController.ts) instance
+Create a [Notification Adapter](./src/NotificationsAdapter.ts) instance
 
 ```typescript
-import { NotificationController } from "@wearesho/notifications-frontend";
+import { NotificationsAdapter } from "@wearesho/notifications-frontend";
 
 const notificationServerUrl = "http://url.to.your.notification.server/";
-const notificationController = new NotificationController(notificationServerUrl);
+const notificationsAdapter = new NotificationsAdapter(notificationServerUrl);
 ```
 
 You need to create a callback function that returns authorization token for user.
@@ -37,7 +37,7 @@ async function receiveAuthorizationToken() {
 Pass this callback to function `authorize()`
 
 ```typescript
-notificationController.authorize(receiveAuthorizationToken);
+notificationsAdapter.authorize(receiveAuthorizationToken);
 ```
 
 Note that this function is async, so it returns `Promise`
@@ -45,7 +45,7 @@ Note that this function is async, so it returns `Promise`
 The next step is to call `connect()` for connecting socket and adding event listeners
 
 ```typescript
-notificationController.connect();
+notificationsAdapter.connect();
 ```
 
 ### Notifications list
@@ -53,7 +53,7 @@ notificationController.connect();
 All notifications can be received by using `loadNotifications()`
 
 ```typescript
-notificationController.loadNotifications()
+notificationsAdapter.loadNotifications()
     .then((notifications) => {
         // you have received all notifications for current user
     });
@@ -85,7 +85,7 @@ class Subscriber implements SubscriberInterface {
 and then you should pass it to `subscribe()`
 
 ```typescript
-notificationController.subscribe(new Subscriber);
+notificationsAdapter.subscribe(new Subscriber);
 ```
 
 ### Actions with notifications
@@ -97,7 +97,7 @@ and pass notification`s id
 
 ```typescript
 const readNotificationId = 'id of read notification';
-notificationController.readNotification(readNotificationId);
+notificationsAdapter.readNotification(readNotificationId);
 ```
 
 #### Delete
@@ -106,7 +106,7 @@ To delete notification you should use `deleteNotification()`
 
 ```typescript
 const deletedNotificationId = 'id of deleted notification';
-notificationController.deleteNotification(deletedNotificationId);
+notificationsAdapter.deleteNotification(deletedNotificationId);
 ```
 
 ### Logout
@@ -115,5 +115,5 @@ If you want to close connection with notification server, you should call `logou
 
 ```typescript
 user.logout(); // example action when you need to close connection
-notificationController.logout();
+notificationsAdapter.logout();
 ```
