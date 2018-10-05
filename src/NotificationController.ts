@@ -1,17 +1,16 @@
 import axios, { AxiosResponse } from "axios";
 import openSocket from "socket.io-client";
 import { NotificationInterface } from "./NotificationInterface";
+import { SubscriberInterface } from "./SubscriberInterface";
 
 export class NotificationController {
     protected static readonly localStorageKey = "wearesho.notification.authorizationToken";
-
-    public readonly notifications: Array<NotificationInterface> = [];
 
     protected url: string;
 
     private authorizationToken: string;
     private socket: SocketIOClient.Socket;
-    private updateListeners: Array<() => void> = [];
+    private subsribers: Array<SubscriberInterface> = [];
 
     public constructor(url: string) {
         this.url = url;
@@ -31,13 +30,38 @@ export class NotificationController {
         return this;
     };
 
-    public init = (): Promise<NotificationController> => {
-        return this.connect().loadNotifications();
+    public connect = (): NotificationController => {
+        this.socket.on("deny", () => {
+            // tslint:disable:no-console
+            console.error("Invalid authorization token");
+            localStorage.removeItem(NotificationController.localStorageKey);
+        });
+
+        this.socket.on("authorized", () => {
+            this.socket.on("push", this.handleNewNotification);
+            this.socket.on("patch", this.handleNotificationRead);
+            this.socket.on("delete", this.handleNotificationDelete);
+        });
+
+        this.socket.emit("auth", this.authorizationToken);
+
+        return this;
     };
 
-    public subscribe = (callback: () => void): NotificationController => {
-        this.updateListeners.push(callback);
+    public subscribe = (subscriber: SubscriberInterface): NotificationController => {
+        this.subsribers.push(subscriber);
         return this;
+    };
+
+    public loadNotifications = async (): Promise<Array<NotificationInterface>> => {
+        const response: AxiosResponse<{
+            notifications: Array<NotificationInterface>
+        }> = await axios.get("/notifications", {
+            baseURL: this.url,
+            headers: { Authorization: this.authorizationToken },
+        });
+
+        return response.data.notifications;
     };
 
     public readNotification = async (notificationId: string): Promise<void> => {
@@ -65,38 +89,7 @@ export class NotificationController {
         localStorage.removeItem(NotificationController.localStorageKey);
     };
 
-    protected connect = (): NotificationController => {
-        this.socket.on("deny", () => {
-            // tslint:disable:no-console
-            console.error("Invalid authorization token");
-            localStorage.removeItem(NotificationController.localStorageKey);
-        });
-
-        this.socket.on("authorized", () => {
-            this.socket.on("push", this.loadNotification);
-            this.socket.on("patch", this.handleNotificationRead);
-            this.socket.on("delete", this.handleNotificationDelete);
-        });
-
-        this.socket.emit("auth", this.authorizationToken);
-
-        return this;
-    };
-
-    protected loadNotifications = async (): Promise<NotificationController> => {
-        const response: AxiosResponse<{
-            notifications: Array<NotificationInterface>
-        }> = await axios.get("/notifications", {
-            baseURL: this.url,
-            headers: { Authorization: this.authorizationToken },
-        });
-
-        this.notifications.push(...response.data.notifications);
-
-        return this;
-    };
-
-    protected loadNotification = async (notificationId: string): Promise<void> => {
+    protected handleNewNotification = async (notificationId: string): Promise<void> => {
         const response: AxiosResponse<{
             notification: NotificationInterface
         }> = await axios.get("/notification", {
@@ -105,27 +98,14 @@ export class NotificationController {
             params: { id: notificationId },
         });
 
-        this.notifications.push(response.data.notification);
-        this.updateListeners.forEach((callback) => callback());
+        this.subsribers.forEach((subscriber) => subscriber.handleNew(response.data.notification));
     };
 
     protected handleNotificationRead = (notificationId: string) => {
-        const index = this.notifications.findIndex((notification) => notification.id === notificationId);
-        if (index === -1) {
-            return;
-        }
-
-        this.notifications[index].read = true;
-        this.updateListeners.forEach((callback) => callback());
+        this.subsribers.forEach((subscriber) => subscriber.handleRead(notificationId));
     };
 
     protected handleNotificationDelete = (notificationId: string) => {
-        const index = this.notifications.findIndex((notification) => notification.id === notificationId);
-        if (index === -1) {
-            return;
-        }
-
-        this.notifications.splice(index, 1);
-        this.updateListeners.forEach((callback) => callback());
+        this.subsribers.forEach((subscriber) => subscriber.handleDelete(notificationId));
     }
 }
