@@ -11,7 +11,7 @@ export class NotificationController {
 
     private authorizationToken: string;
     private socket: SocketIOClient.Socket;
-    private notificationListeners: Array<(notification: NotificationInterface) => void> = [];
+    private updateListeners: Array<() => void> = [];
 
     public constructor(url: string) {
         this.url = url;
@@ -29,16 +29,16 @@ export class NotificationController {
         localStorage.setItem(NotificationController.localStorageKey, this.authorizationToken);
 
         return this;
-    }
+    };
 
     public init = (): Promise<NotificationController> => {
         return this.connect().loadNotifications();
-    }
+    };
 
-    public subscribe = (callback: (notification: NotificationInterface) => void): NotificationController => {
-        this.notificationListeners.push(callback);
+    public subscribe = (callback: () => void): NotificationController => {
+        this.updateListeners.push(callback);
         return this;
-    }
+    };
 
     public readNotification = async (notificationId: string): Promise<void> => {
         await axios.patch("/notification", {}, {
@@ -47,13 +47,8 @@ export class NotificationController {
             headers: { Authorization: this.authorizationToken },
         });
 
-        const index = this.notifications.findIndex((notification) => notification.id === notificationId);
-        if (index === -1) {
-            return;
-        }
-
-        this.notifications[index].read = true;
-    }
+        this.handleNotificationRead(notificationId);
+    };
 
     public deleteNotification = async (notificationId: string): Promise<void> => {
         await axios.delete("/notification", {
@@ -62,18 +57,13 @@ export class NotificationController {
             headers: { Authorization: this.authorizationToken },
         });
 
-        const index = this.notifications.findIndex((notification) => notification.id === notificationId);
-        if (index === -1) {
-            return;
-        }
-
-        this.notifications.splice(index, 1);
-    }
+        this.handleNotificationDelete(notificationId);
+    };
 
     public logout = () => {
         this.socket.close();
         localStorage.removeItem(NotificationController.localStorageKey);
-    }
+    };
 
     protected connect = (): NotificationController => {
         this.socket.on("deny", () => {
@@ -84,12 +74,14 @@ export class NotificationController {
 
         this.socket.on("authorized", () => {
             this.socket.on("push", this.loadNotification);
+            this.socket.on("patch", this.handleNotificationRead);
+            this.socket.on("delete", this.handleNotificationDelete);
         });
 
         this.socket.emit("auth", this.authorizationToken);
 
         return this;
-    }
+    };
 
     protected loadNotifications = async (): Promise<NotificationController> => {
         const response: AxiosResponse<{
@@ -102,7 +94,7 @@ export class NotificationController {
         this.notifications.push(...response.data.notifications);
 
         return this;
-    }
+    };
 
     protected loadNotification = async (notificationId: string): Promise<void> => {
         const response: AxiosResponse<{
@@ -114,6 +106,26 @@ export class NotificationController {
         });
 
         this.notifications.push(response.data.notification);
-        this.notificationListeners.forEach((callback) => callback(response.data.notification));
+        this.updateListeners.forEach((callback) => callback());
+    };
+
+    protected handleNotificationRead = (notificationId: string) => {
+        const index = this.notifications.findIndex((notification) => notification.id === notificationId);
+        if (index === -1) {
+            return;
+        }
+
+        this.notifications[index].read = true;
+        this.updateListeners.forEach((callback) => callback());
+    };
+
+    protected handleNotificationDelete = (notificationId: string) => {
+        const index = this.notifications.findIndex((notification) => notification.id === notificationId);
+        if (index === -1) {
+            return;
+        }
+
+        this.notifications.splice(index, 1);
+        this.updateListeners.forEach((callback) => callback());
     }
 }
