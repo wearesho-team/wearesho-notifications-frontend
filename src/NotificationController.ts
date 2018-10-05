@@ -3,22 +3,31 @@ import openSocket from "socket.io-client";
 import { NotificationInterface } from "./NotificationInterface";
 
 export class NotificationController {
+    protected static readonly localStorageKey = "wearesho.notification.authorizationToken";
+
     public readonly notifications: Array<NotificationInterface> = [];
 
-    protected notificationsServerUrl: string;
-    protected socketUrl: string;
+    protected url: string;
 
     private authorizationToken: string;
     private socket: SocketIOClient.Socket;
     private notificationListeners: Array<(notification: NotificationInterface) => void> = [];
 
-    public constructor(notificationsServerUrl: string, socketUrl: string) {
-        this.notificationsServerUrl = notificationsServerUrl;
-        this.socketUrl = socketUrl;
+    public constructor(url: string) {
+        this.url = url;
+        this.socket = openSocket(url);
     }
 
-    public authorize = (token: string): NotificationController => {
-        this.authorizationToken = token;
+    public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationController> => {
+        const stored = localStorage.getItem(NotificationController.localStorageKey);
+        if (stored) {
+            this.authorizationToken = stored;
+            return this;
+        }
+
+        this.authorizationToken = await requestCallable();
+        localStorage.setItem(NotificationController.localStorageKey, this.authorizationToken);
+
         return this;
     }
 
@@ -33,7 +42,7 @@ export class NotificationController {
 
     public readNotification = async (notificationId: string): Promise<void> => {
         await axios.patch("/notification", {}, {
-            baseURL: this.notificationsServerUrl,
+            baseURL: this.url,
             params: { id: notificationId },
             headers: { Authorization: this.authorizationToken },
         });
@@ -48,7 +57,7 @@ export class NotificationController {
 
     public deleteNotification = async (notificationId: string): Promise<void> => {
         await axios.delete("/notification", {
-            baseURL: this.notificationsServerUrl,
+            baseURL: this.url,
             params: { id: notificationId },
             headers: { Authorization: this.authorizationToken },
         });
@@ -61,12 +70,16 @@ export class NotificationController {
         this.notifications.splice(index, 1);
     }
 
-    protected connect = (): NotificationController => {
-        this.socket = openSocket(this.socketUrl);
+    public logout = () => {
+        this.socket.close();
+        localStorage.removeItem(NotificationController.localStorageKey);
+    }
 
+    protected connect = (): NotificationController => {
         this.socket.on("deny", () => {
             // tslint:disable:no-console
             console.error("Invalid authorization token");
+            localStorage.removeItem(NotificationController.localStorageKey);
         });
 
         this.socket.on("authorized", () => {
@@ -82,7 +95,7 @@ export class NotificationController {
         const response: AxiosResponse<{
             notifications: Array<NotificationInterface>
         }> = await axios.get("/notifications", {
-            baseURL: this.notificationsServerUrl,
+            baseURL: this.url,
             headers: { Authorization: this.authorizationToken },
         });
 
@@ -95,7 +108,7 @@ export class NotificationController {
         const response: AxiosResponse<{
             notification: NotificationInterface
         }> = await axios.get("/notification", {
-            baseURL: this.notificationsServerUrl,
+            baseURL: this.url,
             headers: { Authorization: this.authorizationToken },
             params: { id: notificationId },
         });
