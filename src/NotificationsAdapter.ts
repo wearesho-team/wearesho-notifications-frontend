@@ -16,6 +16,7 @@ export class NotificationsAdapter {
         this.url = url;
         this.socket = openSocket(url.origin, {
             path: url.pathname.replace(/\/?$/, "/socket.io"),
+            transports: ["websocket"],
         });
     }
 
