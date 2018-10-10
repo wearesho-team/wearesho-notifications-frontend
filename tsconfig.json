@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "sourceMap": true,
+    "removeComments": false,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "allowJs": true,
+    "experimentalDecorators": true,
+    "baseUrl": "./src"
+  },
+  "exclude": [
+    "./node_modules/**/*",
+    "./tests/*"
+  ]
+}
