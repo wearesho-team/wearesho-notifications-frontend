@@ -1,0 +1,55 @@
+{
+  "extends": [
+    "tslint:latest"
+  ],
+  "rules": {
+    "no-empty-interface": true,
+    "variable-name": false,
+    "no-object-literal-type-assertion": false,
+    "space-before-function-paren": false,
+    "only-arrow-functions": false,
+    "no-magic-numbers": false,
+    "no-reference": true,
+    "curly": true,
+    "await-promise": false,
+    "no-empty": true,
+    "no-floating-promises": false,
+    "no-invalid-this": true,
+    "no-null-keyword": false,
+    "no-var-keyword": true,
+    "no-submodule-imports": false,
+    "no-var-requires": false,
+    "triple-equals": true,
+    "typeof-compare": true,
+    "array-type": [
+      true,
+      "generic"
+    ],
+    "max-classes-per-file": [
+      true,
+      1
+    ],
+    "no-default-export": false,
+    "no-duplicate-imports": true,
+    "prefer-const": true,
+    "trailing-comma": [
+      true,
+      {
+        "multiline": {
+          "functions": "never"
+        },
+        "singleline": "never"
+      }
+    ],
+    "semicolon": false,
+    "class-name": true,
+    "interface-name": [
+      true,
+      "never-prefix"
+    ],
+    "space-within-parens": false,
+    "object-literal-sort-keys": false,
+    "ordered-imports": false,
+    "no-unused-expression": false
+  }
+}
