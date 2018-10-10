@@ -14,7 +14,9 @@ export class NotificationsAdapter {
 
     public constructor(url: URL) {
         this.url = url;
-        this.socket = openSocket(url.origin, { path: url.pathname });
+        this.socket = openSocket(url.origin, {
+            path: url.pathname.replace(/\/?$/, '/socket.io'),
+        });
     }
 
     public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationsAdapter> => {
