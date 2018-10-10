@@ -6,15 +6,15 @@ import { SubscriberInterface } from "./SubscriberInterface";
 export class NotificationsAdapter {
     protected static readonly localStorageKey = "wearesho.notification.authorizationToken";
 
-    protected url: string;
+    protected url: URL;
 
     private authorizationToken: string;
     private socket: SocketIOClient.Socket;
     private subsribers: Array<SubscriberInterface> = [];
 
-    public constructor(url: string) {
+    public constructor(url: URL) {
         this.url = url;
-        this.socket = openSocket(url);
+        this.socket = openSocket(url.origin, { path: url.pathname });
     }
 
     public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationsAdapter> => {
@@ -57,7 +57,7 @@ export class NotificationsAdapter {
         const response: AxiosResponse<{
             notifications: Array<NotificationInterface>
         }> = await axios.get("/notifications", {
-            baseURL: this.url,
+            baseURL: this.url.href,
             headers: { Authorization: this.authorizationToken },
         });
 
@@ -66,7 +66,7 @@ export class NotificationsAdapter {
 
     public readNotification = async (notificationId: string): Promise<void> => {
         await axios.patch("/notification", {}, {
-            baseURL: this.url,
+            baseURL: this.url.href,
             params: { id: notificationId },
             headers: { Authorization: this.authorizationToken },
         });
@@ -76,7 +76,7 @@ export class NotificationsAdapter {
 
     public deleteNotification = async (notificationId: string): Promise<void> => {
         await axios.delete("/notification", {
-            baseURL: this.url,
+            baseURL: this.url.href,
             params: { id: notificationId },
             headers: { Authorization: this.authorizationToken },
         });
@@ -93,7 +93,7 @@ export class NotificationsAdapter {
         const response: AxiosResponse<{
             notification: NotificationInterface
         }> = await axios.get("/notification", {
-            baseURL: this.url,
+            baseURL: this.url.href,
             headers: { Authorization: this.authorizationToken },
             params: { id: notificationId },
         });

@@ -19,7 +19,7 @@ Create a [Notification Adapter](./src/NotificationsAdapter.ts) instance
 ```typescript
 import { NotificationsAdapter } from "@wearesho/notifications-frontend";
 
-const notificationServerUrl = "http://url.to.your.notification.server/";
+const notificationServerUrl = new URL("http://url.to.your.notification.server/");
 const notificationsAdapter = new NotificationsAdapter(notificationServerUrl);
 ```
 
