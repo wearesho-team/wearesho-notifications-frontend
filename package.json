@@ -30,6 +30,7 @@
     "lint"
   ],
   "devDependencies": {
+    "pre-commit": "^1.2.2",
     "tslint": "^5.11.0",
     "typescript": "^3.1.2"
   }
