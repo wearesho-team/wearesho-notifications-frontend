@@ -4,7 +4,7 @@
   "description": "Library for connection with wearesho-notifications service",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "tslint --exclude '**/*.js' --project ."
   },
   "repository": {
     "type": "git",
@@ -25,5 +25,12 @@
     "axios": "^0.18.0",
     "dotenv": "^6.0.0",
     "socket.io-client": "^2.1.1"
+  },
+  "pre-commit": [
+    "lint"
+  ],
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "typescript": "^3.1.2"
   }
 }

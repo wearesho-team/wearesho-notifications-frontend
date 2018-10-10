@@ -15,7 +15,7 @@ export class NotificationsAdapter {
     public constructor(url: URL) {
         this.url = url;
         this.socket = openSocket(url.origin, {
-            path: url.pathname.replace(/\/?$/, '/socket.io'),
+            path: url.pathname.replace(/\/?$/, "/socket.io"),
         });
     }
 
