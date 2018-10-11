@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from "axios";
+import Axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import openSocket from "socket.io-client";
 import { NotificationInterface } from "./NotificationInterface";
 import { SubscriberInterface } from "./SubscriberInterface";
@@ -6,18 +6,23 @@ import { SubscriberInterface } from "./SubscriberInterface";
 export class NotificationsAdapter {
     protected static readonly localStorageKey = "wearesho.notification.authorizationToken";
 
-    protected url: URL;
-
     private authorizationToken: string;
+    private axios: AxiosInstance;
     private socket: SocketIOClient.Socket;
     private subsribers: Array<SubscriberInterface> = [];
 
     public constructor(url: URL) {
-        this.url = url;
         this.socket = openSocket(url.origin, {
             path: url.pathname.replace(/\/?$/, "/socket.io"),
             transports: ["websocket"],
         });
+
+        this.axios = Axios.create({
+            baseURL: url.href,
+            headers: { Authorization: this.authorizationToken },
+        });
+
+        this.axios.interceptors.response.use(undefined, this.handleError);
     }
 
     public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationsAdapter> => {
@@ -34,11 +39,7 @@ export class NotificationsAdapter {
     };
 
     public connect = (): NotificationsAdapter => {
-        this.socket.on("deny", () => {
-            // tslint:disable:no-console
-            console.error("Invalid authorization token");
-            localStorage.removeItem(NotificationsAdapter.localStorageKey);
-        });
+        this.socket.on("deny", this.logout);
 
         this.socket.on("authorized", () => {
             this.socket.on("push", this.handleNewNotification);
@@ -59,32 +60,21 @@ export class NotificationsAdapter {
     public loadNotifications = async (): Promise<Array<NotificationInterface>> => {
         const response: AxiosResponse<{
             notifications: Array<NotificationInterface>
-        }> = await axios.get("/notifications", {
-            baseURL: this.url.href,
-            headers: { Authorization: this.authorizationToken },
-        });
+        }> = await this.axios.get("/notifications");
 
         return response.data.notifications;
     };
 
-    public readNotification = async (notificationId: string): Promise<void> => {
-        await axios.patch("/notification", {}, {
-            baseURL: this.url.href,
-            params: { id: notificationId },
-            headers: { Authorization: this.authorizationToken },
-        });
+    public readNotification = async (id: string): Promise<void> => {
+        await this.axios.patch("/notification", {}, { params: { id } });
 
-        this.handleNotificationRead(notificationId);
+        this.handleNotificationRead(id);
     };
 
-    public deleteNotification = async (notificationId: string): Promise<void> => {
-        await axios.delete("/notification", {
-            baseURL: this.url.href,
-            params: { id: notificationId },
-            headers: { Authorization: this.authorizationToken },
-        });
+    public deleteNotification = async (id: string): Promise<void> => {
+        await this.axios.delete("/notification", { params: { id } });
 
-        this.handleNotificationDelete(notificationId);
+        this.handleNotificationDelete(id);
     };
 
     public logout = () => {
@@ -92,14 +82,10 @@ export class NotificationsAdapter {
         localStorage.removeItem(NotificationsAdapter.localStorageKey);
     };
 
-    protected handleNewNotification = async (notificationId: string): Promise<void> => {
+    protected handleNewNotification = async (id: string): Promise<void> => {
         const response: AxiosResponse<{
             notification: NotificationInterface
-        }> = await axios.get("/notification", {
-            baseURL: this.url.href,
-            headers: { Authorization: this.authorizationToken },
-            params: { id: notificationId },
-        });
+        }> = await this.axios.get("/notification", { params: { id } });
 
         this.subsribers.forEach((subscriber) => subscriber.handleNew(response.data.notification));
     };
@@ -110,5 +96,13 @@ export class NotificationsAdapter {
 
     protected handleNotificationDelete = (notificationId: string) => {
         this.subsribers.forEach((subscriber) => subscriber.handleDelete(notificationId));
+    };
+
+    protected handleError = (error: AxiosError) => {
+        if (error.response && error.response.status === 401) {
+            this.logout();
+        }
+
+        throw error;
     }
 }
