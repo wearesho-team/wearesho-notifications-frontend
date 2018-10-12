@@ -4,14 +4,19 @@ import { NotificationInterface } from "./NotificationInterface";
 import { SubscriberInterface } from "./SubscriberInterface";
 
 export class NotificationsAdapter {
-    protected static readonly localStorageKey = "wearesho.notification.authorizationToken";
-
+    private readonly identifier: string;
     private authorizationToken: string;
     private axios: AxiosInstance;
     private socket: SocketIOClient.Socket;
     private subsribers: Array<SubscriberInterface> = [];
 
-    public constructor(url: URL) {
+    protected get cacheKey(): string {
+        return `wearesho.notification.authorizationToken.${this.identifier}`;
+    }
+
+    public constructor(url: URL, identifier: string) {
+        this.identifier = identifier;
+
         this.socket = openSocket(url.origin, {
             path: url.pathname.replace(/\/?$/, "/socket.io"),
             transports: ["websocket"],
@@ -26,14 +31,14 @@ export class NotificationsAdapter {
     }
 
     public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationsAdapter> => {
-        const stored = localStorage.getItem(NotificationsAdapter.localStorageKey);
+        const stored = localStorage.getItem(this.cacheKey);
         if (stored) {
             this.authorizationToken = stored;
             return this;
         }
 
         this.authorizationToken = await requestCallable();
-        localStorage.setItem(NotificationsAdapter.localStorageKey, this.authorizationToken);
+        localStorage.setItem(this.cacheKey, this.authorizationToken);
 
         return this;
     };
@@ -79,7 +84,7 @@ export class NotificationsAdapter {
 
     public logout = () => {
         this.socket.close();
-        localStorage.removeItem(NotificationsAdapter.localStorageKey);
+        localStorage.removeItem(this.cacheKey);
     };
 
     protected handleNewNotification = async (id: string): Promise<void> => {
