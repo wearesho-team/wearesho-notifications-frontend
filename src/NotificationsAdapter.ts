@@ -25,13 +25,15 @@ export class NotificationsAdapter {
         this.axios = Axios.create({ baseURL: url.href });
 
         this.axios.interceptors.response.use(undefined, this.handleError);
+        this.axios.interceptors.request.use((request) => {
+            request.headers.Authorization = this.authorizationToken;
+            return request;
+        });
     }
 
     public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationsAdapter> => {
         this.authorizationToken = localStorage.getItem(this.cacheKey) || await requestCallable();
         localStorage.setItem(this.cacheKey, this.authorizationToken);
-
-        this.axios.defaults.headers.Authorization = this.authorizationToken;
 
         return this;
     };
