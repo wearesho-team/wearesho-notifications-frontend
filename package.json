@@ -1,6 +1,6 @@
 {
   "name": "@wearesho/notifications-frontend",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Library for connection with wearesho-notifications service",
   "main": "index.js",
   "scripts": {
