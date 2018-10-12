@@ -22,23 +22,16 @@ export class NotificationsAdapter {
             transports: ["websocket"],
         });
 
-        this.axios = Axios.create({
-            baseURL: url.href,
-            headers: { Authorization: this.authorizationToken },
-        });
+        this.axios = Axios.create({ baseURL: url.href });
 
         this.axios.interceptors.response.use(undefined, this.handleError);
     }
 
     public authorize = async (requestCallable: () => Promise<string>): Promise<NotificationsAdapter> => {
-        const stored = localStorage.getItem(this.cacheKey);
-        if (stored) {
-            this.authorizationToken = stored;
-            return this;
-        }
-
-        this.authorizationToken = await requestCallable();
+        this.authorizationToken = localStorage.getItem(this.cacheKey) || await requestCallable();
         localStorage.setItem(this.cacheKey, this.authorizationToken);
+
+        this.axios.defaults.headers.Authorization = this.authorizationToken;
 
         return this;
     };
