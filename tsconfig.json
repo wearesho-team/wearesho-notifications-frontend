@@ -1,19 +1,18 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
     "sourceMap": true,
-    "removeComments": false,
+    "removeComments": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "allowJs": true,
+    "declaration": true,
+    "declarationDir": "build",
     "experimentalDecorators": true,
-    "baseUrl": "./src"
+    "emitDecoratorMetadata": true
   },
   "exclude": [
     "./node_modules/**/*",
-    "./tests/*"
   ]
 }
