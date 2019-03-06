@@ -1,6 +1,6 @@
 {
   "name": "@sho-js/notifications-frontend",
-  "version": "4.0.2",
+  "version": "5.0.0",
   "description": "Library for connection with wearesho-notifications service",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
