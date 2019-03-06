@@ -20,16 +20,15 @@
     "url": "https://github.com/wearesho-team/wearesho-notifications-frontend/issues"
   },
   "homepage": "https://github.com/wearesho-team/wearesho-notifications-frontend#readme",
-  "dependencies": {
-    "@types/socket.io-client": "^1.4.32",
+  "peerDependencies": {
     "axios": "^0.18.0",
-    "dotenv": "^6.0.0",
     "socket.io-client": "^2.1.1"
   },
   "pre-commit": [
     "lint"
   ],
   "devDependencies": {
+    "@types/socket.io-client": "^1.4.32",
     "pre-commit": "^1.2.2",
     "tslint": "^5.11.0",
     "typescript": "^3.1.2"
