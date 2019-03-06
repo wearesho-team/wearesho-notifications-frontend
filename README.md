@@ -7,7 +7,7 @@ You can easily connect to notifications server and listen for updates.
 ## Setup
 
 ```bash
-npm i --save @wearesho/notifications-frontend
+npm i --save @sho-js/notifications-frontend
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ npm i --save @wearesho/notifications-frontend
 Create a [Notification Adapter](./src/NotificationsAdapter.ts) instance
 
 ```typescript
-import { NotificationsAdapter } from "@wearesho/notifications-frontend";
+import { NotificationsAdapter } from "@sho-js/notifications-frontend";
 
 const notificationServerUrl = new URL("http://url.to.your.notification.server/");
 const notificationsAdapter = new NotificationsAdapter(notificationServerUrl);
@@ -64,7 +64,7 @@ notificationsAdapter.loadNotifications()
 To handle updates you may create an implementation of [SubscriberInterface](./src/SubscriberInterface.ts)
 
 ```typescript
-import { SubscriberInterface, NotificationInterface } from "@wearesho/notifications-frontend";
+import { SubscriberInterface, NotificationInterface } from "@sho-js/notifications-frontend";
 
 class Subscriber implements SubscriberInterface {
     public handleNew = (notification: NotificationInterface) => {

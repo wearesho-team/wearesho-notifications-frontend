@@ -1,5 +1,5 @@
 {
-  "name": "@wearesho/notifications-frontend",
+  "name": "@sho-js/notifications-frontend",
   "version": "4.0.2",
   "description": "Library for connection with wearesho-notifications service",
   "main": "build/index.js",
