@@ -1,7 +1,20 @@
 import Axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import openSocket from "socket.io-client";
-import { NotificationInterface } from "./NotificationInterface";
-import { SubscriberInterface } from "./SubscriberInterface";
+
+export interface NotificationInterface {
+    id: string;
+    message: string;
+    type: string;
+    time: string;
+    read: boolean;
+    context?: object;
+}
+
+export interface SubscriberInterface {
+    handleNew(notification: NotificationInterface): void;
+    handleRead(notificationId: string): void;
+    handleDelete(notificationId: string): void;
+}
 
 export class NotificationsAdapter {
     private readonly identifier: string;
